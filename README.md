@@ -2,6 +2,8 @@
 Welcome to jikantoki's github!  
 This is made by me when high school class. This is very like Super Maxxo Bros.  
 
+![Screen shot](./screenshot_super3.png)
+
 ***  
 
 ## How to run  
