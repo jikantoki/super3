@@ -4,7 +4,7 @@
 #define FIRSTSTAGE 1;最初のステージ、基本1
 
 	#define GAMENAME "SUPER3"
-	#define DEVELOPER "製作者:ときえのきと愉快な仲間たち\nhttps://github.com/jikantoki\n\nBGMと効果音は魔王魂またはポケットサウンドのものを使用\nhttps://maoudamashii.jokersounds.com/\nhttps://pocket-se.info/"
+	#define DEVELOPER "製作者:ときえのきと愉快な仲間たち\nhttps://github.com/jikantoki\nhttps://twitter.com/jikantoki\n\nBGMと効果音は魔王魂、ポケットサウンド、Musmusのものを使用\nhttps://maoudamashii.jokersounds.com/\nhttps://pocket-se.info/\nhttps://musmus.main.jp/"
 	#packopt name "game.exe"
 
 /* 画像についての注意点
@@ -105,6 +105,8 @@ mmload "音声フォルダ\\powerup.wav",PUWAV
 mmload "音声フォルダ\\tyukan.wav",TYWAV
 #enum CCWAV
 mmload "音声フォルダ\\cancel.wav",CCWAV
+#enum OUWAV
+mmload "音声フォルダ\\one_up.wav",OUWAV
 
 #enum BGM1
 dmmload "音声フォルダ\\bgm1.ogg",BGM1
@@ -766,12 +768,22 @@ goto *main
 return
 
 ;***************************************************************************************************
+*cohantei
+	;1up判定
+	if(havecoin>=100){
+		mmplay OUWAV
+	}else{
+		mmplay COWAV
+	}
+	return
+	
+;***************************************************************************************************
 *haikei
 	;コイン判定
-	if(mapmain(cy/BMAG,cx/BMAG)==COIN):mapmain(cy/BMAG,cx/BMAG)==AIR:havecoin++:mmplay COWAV
-	if(mapmain(cRUy/BMAG,cRUx/BMAG)==COIN):mapmain(cRUy/BMAG,cRUx/BMAG)==AIR:havecoin++:mmplay COWAV
-	if(mapmain(cLLy/BMAG,cLLx/BMAG)==COIN):mapmain(cLLy/BMAG,cLLx/BMAG)==AIR:havecoin++:mmplay COWAV
-	if(mapmain(cRLy/BMAG,cRLx/BMAG)==COIN):mapmain(cRLy/BMAG,cRLx/BMAG)==AIR:havecoin++:mmplay COWAV
+	if(mapmain(cy/BMAG,cx/BMAG)==COIN):mapmain(cy/BMAG,cx/BMAG)==AIR:havecoin++:gosub *cohantei
+	if(mapmain(cRUy/BMAG,cRUx/BMAG)==COIN):mapmain(cRUy/BMAG,cRUx/BMAG)==AIR:havecoin++:gosub *cohantei
+	if(mapmain(cLLy/BMAG,cLLx/BMAG)==COIN):mapmain(cLLy/BMAG,cLLx/BMAG)==AIR:havecoin++:gosub *cohantei
+	if(mapmain(cRLy/BMAG,cRLx/BMAG)==COIN):mapmain(cRLy/BMAG,cRLx/BMAG)==AIR:havecoin++:gosub *cohantei
 
 	if(havecoin>=100) : havecoin -= 100 : life+=1
 
@@ -801,11 +813,11 @@ return
 ;***************************************************************************************************
 *tataku
 	;ジャンプ中の当たり判定
-	if(mapmain(cy/BMAG,cx/BMAG)==HATENA)	: mapmain(cy/BMAG,cx/BMAG)=NOITEM:havecoin++:mmplay COWAV
-	if(mapmain(cRUy/BMAG,cRUx/BMAG)==HATENA): mapmain(cRUy/BMAG,cRUx/BMAG)=NOITEM:havecoin++:mmplay COWAV
+	if(mapmain(cy/BMAG,cx/BMAG)==HATENA)	: mapmain(cy/BMAG,cx/BMAG)=NOITEM:havecoin++:gosub *cohantei
+	if(mapmain(cRUy/BMAG,cRUx/BMAG)==HATENA): mapmain(cRUy/BMAG,cRUx/BMAG)=NOITEM:havecoin++:gosub *cohantei
 
-	if(mapmain(cy/BMAG,cx/BMAG)==TOMEI)		: maphit(cy/BMAG,cx/BMAG)=BASIC		: mapmain(cy/BMAG,cx/BMAG)=NOITEM		: havecoin++:mmplay COWAV
-	if(mapmain(cRUy/BMAG,cRUx/BMAG)==TOMEI)	: maphit(cRUy/BMAG,cRUx/BMAG)=BASIC	: mapmain(cRUy/BMAG,cRUx/BMAG)=NOITEM	: havecoin++:mmplay COWAV
+	if(mapmain(cy/BMAG,cx/BMAG)==TOMEI)		: maphit(cy/BMAG,cx/BMAG)=BASIC		: mapmain(cy/BMAG,cx/BMAG)=NOITEM		: havecoin++:gosub *cohantei
+	if(mapmain(cRUy/BMAG,cRUx/BMAG)==TOMEI)	: maphit(cRUy/BMAG,cRUx/BMAG)=BASIC	: mapmain(cRUy/BMAG,cRUx/BMAG)=NOITEM	: havecoin++:gosub *cohantei
 
 return
 ;***************************************************************************************************
@@ -842,6 +854,18 @@ return
 		if frame >= 60 : frame = 0
 		fps_wait
 	loop
+	screen 0,WINDOWX,WINDOWY,0,0,0 : cls 4
+	color $FF,$FF,$FF
+	sa = "ST-"+snumber+":結果"
+	ssize = 64
+	font msgothic,ssize
+	pos ginfo(12)/2-(strlen(sa)*(ssize/2))/2,ginfo(13)/2-ssize
+	mes sa
+	sa = "残り  x"+life+"+"+" x"+coin
+	font msgothic,BMAG
+	pos ginfo(12)/2-(strlen(sa)*(BMAG/2))/2,ginfo(13)/2
+	mes "残り",1 : celput CHARAID,0 : mes "x"+life+"+",1 : celput COIN,0 : mes "x"+havecoin
+	wait 300
 
 	snumber+=1
 	if snumber>100 : goto *gameset
@@ -850,6 +874,7 @@ return
 	;dialog "ステージ\\"+select+".txt\n"+strsize
 	if strsize = -1:goto *gameset
 	interpflag=0
+	
 
 	goto *start
 		
@@ -917,15 +942,15 @@ return
 
 	screen 0,WINDOWX,WINDOWY,0,0,0 : cls 4
 	color $FF,$FF,$FF
-	sa = "ステージ"+snumber
+	sa = "ST-"+snumber
 	ssize = 64
 	font msgothic,ssize
 	pos ginfo(12)/2-(strlen(sa)*(ssize/2))/2,ginfo(13)/2-ssize
 	mes sa
-	sa = "残り  x"+life
+	sa = "  x"+life
 	font msgothic,BMAG
 	pos ginfo(12)/2-(strlen(sa)*(BMAG/2))/2,ginfo(13)/2
-	mes "残り",1 : celput CHARAID,0 : mes "x"+life
+	mes "",1 : celput CHARAID,0 : mes "x"+life
 	
 	await
 

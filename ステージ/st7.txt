@@ -1,16 +1,90 @@
-                                                                                            
-                                                                                            
-{}                                                                         o                
-[]                                                                         |                
-[]                                                              OO         |                
-[]                                                             OOO         |                
-[]             ?                              _ _             OOOO         |                
-[]                                                           OOOOO         |                
-[]                                                          OOOOOO         |                
-[]                               $$$                       OOOOOOO         |                
-[]       ?   b?b?b              $   $         b b         OOOOOOOO{}       |                
-[]                                                       OOOOOOOOO[]       |                
-[]                                                   {} OOOOOOOOOO[]       |                
-[]  P                                   R            []OOOOOOOOOOO[]       O          !     
-WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWMMMWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
-WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWJJJWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+WWWWWWWWWWWWWWWWWWWWWWWWWWW
+W O  O         o          W
+W O  O         |          W
+W O  O         |          W
+W              O     !    W
+W      W WWW WWWWWWWWWWWWWW
+W                         W
+W                         W
+W                   mmm   W
+W                   $$$   W
+W                   $$$   W
+W                         W
+W                         W
+W                         W
+W                         W
+W   ^                  9  W
+WmmmWmmWWWWWWWWWWWWW$$$WWWW
+W                         W
+W                         W
+W                         W
+W                         W
+W                         W
+W         WWWWWWWWWWW^WWWWW
+W                         W
+W                         W
+W                         W
+W                         W
+W                         W
+W                         W
+W                         W
+W                         W
+W                         W
+W                         W
+W                         W
+W                         W
+W                         W
+W    ^                    W
+W                         W
+W                         W
+W                         W
+W                         W
+W$                       $W
+W$                       $W
+W$                       $W
+W$                       $W
+WW         ^             WW
+W                         W
+W                         W
+W                         W
+W                         W
+W                         W
+W                         W
+W               $$$       W
+W               $^$       W
+W               $$$       W
+W                         W
+W                         W
+W                         W
+W                         W
+W                         W
+W                         W
+W                         W
+W      $$                 W
+W      ^$                 W
+W     mmm                 W
+W                         W
+W                         W
+W                         W
+W                         W
+W                         W
+W            $            W
+W                         W
+W                         W
+W        $                W
+W        $   ^            W
+W        $                W
+W        $ O              W
+W                         W
+W                         W
+W                         W
+W                         W
+W                         W
+W                         W
+W          $              W
+W                         W
+W                         W
+W                         W
+W                         W
+W   P      ^              W
+WWWWWWWWWWWWWWWWWWWWWWWWWWW
