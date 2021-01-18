@@ -1,0 +1,465 @@
+title "マップ作成ツール(ガバガバ)"
+
+/* 画像についての注意点
+背景を黒(R,G,B=0,0,0)にしてください、右の命令のモード2を使用します(F1で解説を開く) ⇒ gmode
+逆に画像に黒(R,G,B=0,0,0)を使用しないでください、黒を使いたい場合(R,G,B=1,1,1)をご使用ください。 */
+
+#include "ランタイム\\fps.hsp"
+#packopt name "mapcreat.exe"
+#define STAGE "ステージ\\"
+#define GAZOU "画像フォルダ\\"
+#define MAGNIFICATION 3
+
+#define WINDOWX 1280
+#define WINDOWY 780
+
+#define MAXSPEED 5.0
+
+#const CHARASIZE 14*MAGNIFICATION
+#const CHARASHIFT 1*MAGNIFICATION
+#const BMAG 16*MAGNIFICATION
+
+#enum AIR = 0
+#enum ERROR = 200
+#enum BASIC
+celload GAZOU+"error.png",BASIC : buffer ERROR,BMAG,BMAG : gzoom BMAG*2,BMAG*2,BASIC 
+
+/* 変化ありブロック追加の説明 (この下に作ってください)
+#enum プログラム内で使う名前(以下[enum名前]) (ファイルは事前に画像フォルダに入れておく)
+celload GAZOU+"ファイルの名前",BASIC : buffer enum名前,BMAG,BMAG : gzoom BMAG*2,BMAG*2,BASIC */
+#enum BRICK
+celload GAZOU+"レンガ.png",BASIC : buffer BRICK,BMAG,BMAG : gzoom BMAG*2,BMAG*2,BASIC
+#enum HATENA
+celload GAZOU+"疑問符.png",BASIC : buffer HATENA,BMAG,BMAG : gzoom BMAG*2,BMAG*2,BASIC
+#enum TOMEI
+buffer TOMEI,BMAG,BMAG : cls 4
+#enum MAGMA
+celload GAZOU+"マグマ.png",BASIC : buffer MAGMA,BMAG,BMAG : gzoom BMAG*2,BMAG*2,BASIC
+#enum MAGMAB
+celload GAZOU+"マグマキューブ.png",BASIC : buffer MAGMAB,BMAG,BMAG : gzoom BMAG*2,BMAG*2,BASIC
+#enum UNDERMAGMA
+buffer UNDERMAGMA,BMAG,BMAG : color 237,28,36 : boxf
+#enum COIN
+celload GAZOU+"コイン.png",BASIC : buffer COIN,BMAG,BMAG : gzoom BMAG*2,BMAG*2,BASIC
+#enum GOALPAUL
+celload GAZOU+"ゴールポール.png",BASIC : buffer GOALPAUL,BMAG,BMAG : gzoom BMAG*2,BMAG*2,BASIC
+#enum GOALBALL
+celload GAZOU+"ゴール上.png",BASIC : buffer GOALBALL,BMAG*2,BMAG*2 : gzoom BMAG*2,BMAG*2,BASIC
+#enum NOITEM
+celload GAZOU+"アイテムなしブロック.png",BASIC : buffer NOITEM,BMAG,BMAG : gzoom BMAG*2,BMAG*2,BASIC
+#enum INTERP
+celload GAZOU+"中間フラッグ.png",BASIC : buffer INTERP,BMAG,BMAG : gzoom BMAG*2,BMAG*2,BASIC
+#enum CASTLE
+celload GAZOU+"お城.png",BASIC : buffer CASTLE,BMAG*2,BMAG*2 : gzoom BMAG*2,BMAG*2,BASIC,0,0,64,64
+
+#enum CHARAID
+celload GAZOU+"キャラクター.png",BASIC : buffer CHARAID,BMAG*5,BMAG*3 : gzoom BMAG*5,BMAG*3,BASIC,0,0,16*5,16*3
+celdiv CHARAID,BMAG,BMAG
+
+#enum BACK
+celload STAGE+"背景.png",BACK
+#enum UPBACK
+celload STAGE+"背景上.png",UPBACK
+
+fps_config 60
+extension = ".txt"
+cx = 0 : cy = 0
+
+;***************************************************************************************************
+bgscr 1,100,160,,100,100
+	objsize 30,30
+	dim st,7
+	st(0)=1
+	chkbox "1",st(0)
+	chkbox "2",st(1)
+	chkbox "4",st(2)
+	chkbox "8",st(3)
+	pos 30,0
+	chkbox "16",st(4)
+	chkbox "32",st(5)
+	chkbox "64",st(6)
+
+	pos 40,100
+	input select,50,20
+	ia = stat
+	objenable ia,0
+
+	pos 55,135 : objsize 40,20 : button "適用",*start : objsel stat
+
+	repeat
+		ib = 0
+		foreach st
+			ib += st(cnt)*powf(2,cnt)
+		loop
+		select = "st" + ib
+		objprm ia,select
+		fps_wait
+	loop
+;***************************************************************************************************
+*start
+ib=0
+foreach st
+	ib += st(cnt)*powf(2,cnt)
+loop
+select = "st" + ib
+
+cRUx = 0 : cRUy = 0
+cLLx = 0 : cLLy = 0
+cRLx = 0 : cRLy = 0
+cspeed = 0.0
+cspeedy = 0 : jumpflag=0
+cdraw = 0
+frame = 0
+cturn = 0
+key = 0
+upkey = 0
+spacekey = 0
+movetest = 1
+;初期化
+select = "st" + ib
+cdraw = 0
+
+mapdrawx = 0
+mapdrawy = 0
+speed = 0
+
+gosub *mapload
+
+font msgothic,32
+
+;***************************************************************************************************
+*main
+
+	redraw 0
+	gosub *mapdraw
+	if key&1024 : movetest ^= 1
+	if movetest : gosub *chara : else : gosub *testmove
+	redraw 1
+
+	getkey a,116
+	if a : goto *start
+	fps_wait
+
+	frame += 1
+	if frame >= 60 : frame = 0
+
+	title strf("%3d  ,  %f  ,  %d",stat,fps_get(),movetest)
+
+goto *main
+
+;***************************************************************************************************
+
+*chara
+	stick key,15+64
+*charamove
+
+	if key&128 : cx=0 : cy=0
+
+	if key&64 : speed = 15 : else : speed = 8
+
+	if key&1 : cx -= speed 
+	if key&2 : cy -= speed
+	if key&4 : cx += speed
+	if key&8 : cy += speed
+
+*charadraw
+
+	gmode 2,BMAG,BMAG
+	pos cx-CHARASHIFT,cy : celput CHARAID,0
+
+	if((cx < ginfo(8)+double(WINDOWX)*0.4) & (ginfo(8)>0))							{ groll cx-double(WINDOWX)*0.4,ginfo(9)
+	}else : if((cx > ginfo(8)+double(WINDOWX)*0.6) & (ginfo(8)<mapyoko-WINDOWX))	: groll cx-double(WINDOWX)*0.6,ginfo(9)
+	if((cy < ginfo(9)+double(WINDOWY)*0.4) & (ginfo(9)>0))							{ groll ginfo(8),cy-double(WINDOWY)*0.4
+	}else : if((cy > ginfo(9)+double(WINDOWY)*0.6) & (ginfo(9)<maptate-WINDOWY))	: groll ginfo(8),cy-double(WINDOWY)*0.6
+
+return
+
+;***************************************************************************************************
+*mapload
+
+	dim mapmain,2048,512
+	dim maphit,2048,512
+	sdim mapindex,2048
+	sdim mapin,1048576 ;2048*512
+
+	notesel mapin
+	noteload STAGE+select+extension,1048576
+	noteunsel
+
+	ca = "\n"
+	split mapin,ca,mapindex
+	maphigh = stat
+	maplen = strlen(mapindex)
+
+	mapyoko = maplen*BMAG
+	maptate = maphigh*BMAG
+
+	buffer BASIC,mapyoko,maptate
+	color 153,217,234
+	boxf
+	gmode 2
+	repeat :i=cnt
+		if(mapyoko<800*cnt):break
+
+		repeat ,2:j=cnt
+			pos 800*i,maptate-600*j : celput UPBACK
+			if(maptate<600*j):break
+		loop
+		
+		pos 800*i,maptate-600 : celput BACK
+	loop
+	buffer 1000,maplen*16,maphigh*16 : cls 4
+	repeat maphigh : i=cnt
+		repeat maplen : j=cnt
+			ca = strmid(mapindex.i,j,1)
+			pos j*16,i*16
+			mapmain(i,j)=BASIC
+			maphit(i,j)=BASIC
+			if			ca=="0"{	picload GAZOU + "床ブロック.png",1
+			}else : if	ca=="O"{	picload GAZOU + "固ブロック.png",1
+			/* 変化なし&1マス判定 ブロック追加の説明
+			}else:if    ca=="メモの文字"{	picload GAZOU + ファイルの名前",1 (ファイルは事前に画像フォルダに入れておく) */
+			/* 変化ありブロックの追加の説明
+			}else:if	ca=="メモの文字"{	mapmain(i,j) = enum名前 */
+			}else:if	ca=="{"{	picload GAZOU + "土管左上.png",1
+			}else:if	ca=="}"{	picload GAZOU + "土管右上.png",1
+			}else:if	ca=="["{	picload GAZOU + "土管左下.png",1
+			}else:if	ca=="]"{	picload GAZOU + "土管右下.png",1
+			}else:if	ca=="b"{	mapmain(i,j) = BRICK
+			}else:if	ca=="?"{	mapmain(i,j) = HATENA
+			}else:if	ca=="_"{	mapmain(i,j) = TOMEI : maphit(i,j) = AIR
+			}else:if	ca=="M"{	mapmain(i,j) = MAGMA : maphit(i,j) = AIR
+			}else:if	ca=="m"{	mapmain(i,j) = MAGMAB : maphit(i,j) = AIR
+			}else:if	ca=="J"{	mapmain(i,j) = UNDERMAGMA : maphit(i,j) = AIR
+			}else:if	ca=="$"{	mapmain(i,j) = COIN : maphit(i,j) = AIR
+			}else:if	ca=="|"{	mapmain(i,j) = GOALPAUL : maphit(i,j) = GOAL
+			}else:if	ca=="o"{	mapmain(i,j-1) = GOALBALL : maphit(i,j) = GOAL
+			}else:if	ca=="!"{	pos ginfo(22)-16*3,ginfo(23)-16*5 : celput CASTLE : mapmain(i,j) = CASTLE : maphit(i,j) = AIR
+			}else:if	ca=="P"{	cx = j*BMAG : cy = i*BMAG : mapmain(i,j) = AIR : maphit(i,j) = AIR
+			}else:if	ca=="R"{	mapmain(i,j) = INTERP : maphit(i,j) = AIR
+			}else:if	ca=="9"{	mapmain(i,j) = INTERP : maphit(i,j) = AIR
+			}else:if	ca==" "{	mapmain(i,j) = AIR : maphit(i,j) = AIR
+			}else{	mapmain(i,j)=ERROR
+			}
+		loop
+	loop
+	buffer 1001,mapyoko,maptate
+	gzoom mapyoko,maptate,1000,0,0,maplen*16,maphigh*16
+	gsel BASIC
+	gmode 2,mapyoko,maptate 
+	pos 0,0
+	celput 1001
+
+	screen 0,mapyoko,maptate,0,0,0,WINDOWX,WINDOWY
+
+return
+
+*mapdraw
+
+	mapdrawx = ginfo(8)-3*BMAG
+	if mapdrawx<0 : mapdrawx = 0
+	mapdrawy = ginfo(9)-3*BMAG
+	if mapdrawy<0 : mapdrawy = 0
+	pos mapdrawx,mapdrawy
+	gcopy BASIC,mapdrawx,mapdrawy,BMAG*32,BMAG*20
+
+	gmode 2,BMAG,BMAG
+	repeat 20 : i=cnt+mapdrawy/BMAG
+		repeat 32 : j=cnt+mapdrawx/BMAG
+			pos j*BMAG,i*BMAG
+			if((mapmain(i,j)!=BASIC)&(mapmain(i,j)!=AIR)&(mapmain(i,j)!=CASTLE)) : celput mapmain(i,j)
+		loop
+	loop
+return
+;***************************************************************************************************
+*testmove
+	stick key,5+64
+
+	if key&256 : cx = ginfo(8)+mousex : cy = ginfo(9)+mousey
+
+	;加速度設定
+	cacc = 0.1
+	cmaxspeed = 5
+	if key&64 : cacc += 0.05 : cmaxspeed += 4
+
+	;左
+	if key&1{
+		cspeed -= cacc
+		if(cspeed<-cmaxspeed) : cspeed += cacc+0.01
+		if(cspeed<-cmaxspeed) : cspeed += 0.1
+	}else:if(cspeed < 0):	cspeed += 0.2 : cspeed = limitf(cspeed,,0)
+	;右
+	if key&4{
+		cspeed += cacc
+		if(cspeed>cmaxspeed) : cspeed -= cacc+0.01
+		if(cspeed>cmaxspeed) : cspeed -= 0.1
+	}else:if(cspeed > 0):	cspeed -= 0.2 : cspeed = limitf(cspeed,0)
+
+	;横移動
+	if cspeed<0 : cx += cspeed-1 : else:if cspeed>0 : cx += cspeed+1
+
+	;はみ出し回避
+	cx = limit(cx,0,mapyoko-CHARASIZE)
+
+	;x場所更新
+	cRUx = cx+CHARASIZE-1
+	cLLx = cx
+	cRLx = cx+CHARASIZE-1
+
+	;ジャンプ
+	if(cy>0){
+		if(jumpflag==0){;ジャンプフラグなし
+			if((maphit((cLLy+1)/BMAG,(cLLx+1)/BMAG)!=AIR)||(maphit((cRLy+1)/BMAG,(cRLx-1)/BMAG)!=AIR)){;地面ついてる！
+				if(key&2)||(key&16){
+					jumpflag=1
+					cspeedy-=20+abs(cspeed)/3
+				}
+			}else{;おめーの地面ねーから
+				jumpflag=1
+				cspeedy+=1
+			}
+		}else{;ジャンプフラグあり
+			if( ( (maphit((cLLy+1)/BMAG,(cLLx+1)/BMAG)!=AIR) || (maphit((cRLy+1)/BMAG,(cRLx-1)/BMAG)!=AIR) ) && (cspeedy>=0) ){;地面ありき
+				jumpflag=0
+				cspeedy=0.0
+			}else{;down down Mario
+				getkey upkey,38
+				getkey spacekey,32
+				if((upkey|spacekey)==0)&(cspeedy<0) : cspeedy+=2
+				cspeedy+=1
+			}
+		}
+	}else:	cspeedy+=1
+
+	;縦移動
+	cspeedy = limit(cspeedy,-BMAG+1,15)
+	cy += cspeedy
+
+	;y場所更新
+	cRUy = cy
+	cLLy = cy+BMAG-1
+	cRLy = cy+BMAG-1
+
+	;上配列エラー回避
+	if(cy>0){
+		;上判定 独自言語解説:[{(どっちか上+飛)+(どっちも下空気)}or{どっちも上+飛}]
+		if((((maphit(cy/BMAG,cx/BMAG)!=AIR)|(maphit(cRUy/BMAG,cRUx/BMAG)!=AIR)) & (cspeedy<0) & ((maphit(cLLy/BMAG,cLLx/BMAG)==AIR)&(maphit(cRLy/BMAG,cRLx/BMAG)==AIR)))  |  (((maphit(cy/BMAG,cx/BMAG)!=AIR)&(maphit(cRUy/BMAG,cRUx/BMAG)!=AIR)) & (cspeedy<0))) or ((((mapmain(cy/BMAG,cx/BMAG)==TOMEI)|(mapmain(cRUy/BMAG,cRUx/BMAG)==TOMEI)) & (cspeedy<0) & ((maphit(cLLy/BMAG,cLLx/BMAG)==AIR)&(maphit(cRLy/BMAG,cRLx/BMAG)==AIR)))  |  (( ((mapmain(cy/BMAG,cx/BMAG)==TOMEI)|(maphit(cy/BMAG,cx/BMAG)!=AIR)) & ((maphit(cRUy/BMAG,cRUx/BMAG)==TOMEI)|(maphit(cRUy/BMAG,cRUx/BMAG)!=AIR)) ) & (cspeedy<0))){
+			gosub *tataku
+			cy = (cy/BMAG+1) * BMAG
+			cspeedy = 0
+		;左右どっちか壁で入る。ただしどっちもは入らない 独自言語解説:[{(左どっちか)xor(右どっちか)}+{(ジャンプ中)or(左下落下めり込み上ブロック)or(右下落下めり込み上ブロック)}]
+		}else:if((((maphit(cy/BMAG,cx/BMAG)!=AIR)|(maphit(cLLy/BMAG,cLLx/BMAG)!=AIR)) ^ ((maphit(cRUy/BMAG,cRUx/BMAG)!=AIR)|(maphit(cRLy/BMAG,cRLx/BMAG)!=AIR)))&((cspeedy<=0)|(maphit((cLLy-15)/BMAG,cLLx/BMAG)!=AIR)|(maphit((cRLy-15)/BMAG,cRLx/BMAG)!=AIR))){
+
+			if((maphit(cy/BMAG,cx/BMAG)!=AIR) | (maphit(cLLy/BMAG,cLLx/BMAG)!=AIR)){
+				cx = (cx/BMAG+1) * BMAG
+				cspeed = limitf(cspeed,0)
+			}else:if((maphit(cRUy/BMAG,cRUx/BMAG)!=AIR) | (maphit(cRLy/BMAG,cRLx/BMAG)!=AIR)){
+				cx = (cx/BMAG+1) * BMAG - CHARASIZE
+				cspeed = limitf(cspeed,,0)
+			}
+		;地面めり込み回避
+		}else:if(maphit(cLLy/BMAG,cLLx/BMAG)!=AIR)|(maphit(cRLy/BMAG,cRLx/BMAG)!=AIR){
+			cy = (cLLy/BMAG-1) * BMAG
+		}
+	}
+
+	;位置更新
+	cRUx = cx+CHARASIZE-1	: cRUy = cy
+	cLLx = cx				: cLLy = cy+BMAG-1
+	cRLx = cx+CHARASIZE-1	: cRLy = cy+BMAG-1
+
+	pos cRUx,cRUy
+	if(cy>0){
+		if(maphit(cy/BMAG,cx/BMAG)!=AIR):	mes "左上"
+		if(maphit(cRUy/BMAG,cRUx/BMAG)!=AIR):	mes "右上"
+		if(maphit(cLLy/BMAG,cLLx/BMAG)!=AIR):	mes "左下"
+		if(maphit(cRLy/BMAG,cRLx/BMAG)!=AIR):	mes "右下"
+		if(maphit((cLLy+1)/BMAG,cLLx/BMAG)!=AIR):	mes "左下地面"
+		if(maphit((cRLy+1)/BMAG,cRLx/BMAG)!=AIR):	mes "右下地面"
+	}
+
+	color 0,0,$FF
+	pset cx,cy : pset cx+1,cy : pset cx,cy+1
+	pset cRUx,cRUy : pset cRUx-1,cRUy : pset cRUx,cRUy+1
+	pset cLLx,cLLy : pset cLLx+1,cLLy : pset cLLx,cLLy-1
+	pset cRLx,cRLy : pset cRLx-1,cRLy : pset cRLx,cRLy-1
+
+	if(cy>0){
+		if(mapmain(cy/BMAG,cx/BMAG)==COIN):mapmain(cy/BMAG,cx/BMAG)==AIR:havecoin++
+		if(mapmain(cRUy/BMAG,cRUx/BMAG)==COIN):mapmain(cRUy/BMAG,cRUx/BMAG)==AIR:havecoin++
+		if(mapmain(cLLy/BMAG,cLLx/BMAG)==COIN):mapmain(cLLy/BMAG,cLLx/BMAG)==AIR:havecoin++
+		if(mapmain(cRLy/BMAG,cRLx/BMAG)==COIN):mapmain(cRLy/BMAG,cRLx/BMAG)==AIR:havecoin++
+	}
+/* 0:右立ち 1,2:右歩き 3:右に切り返し 4:右跳び 5～9:左同じく 
+   10:死 */
+
+	if(gaovflag){
+		cdraw=10
+	}else:if(cy<0){
+		if((cdraw>=0)&(cdraw<=3)) : cdraw=4 : else:if((cdraw>=5)&(cdraw<=8)) : cdraw=9
+	}else:if(((maphit((cLLy+1)/BMAG,cLLx/BMAG)==AIR)&&(maphit((cRLy+1)/BMAG,cRLx/BMAG)==AIR))||(cspeedy>0)){
+		if((cdraw>=0)&(cdraw<=3)) : cdraw=4 : else:if((cdraw>=5)&(cdraw<=8)) : cdraw=9
+	}else:if cspeed == 0 {
+		if((cdraw>=1)&(cdraw<=4)) : cdraw=0 : else:if((cdraw>=6)&(cdraw<=9)) : cdraw=5
+	}else:if key&1 {
+		if cspeed>0 {
+			if key&4 {
+				if frame\5 = 0{
+				cturn ^= 1
+				}
+				cdraw = 1+cturn
+			}else{
+				cdraw = 8
+			}
+		}else{
+			if frame\5 = 0{
+				cturn ^= 1
+			}
+			cdraw = 6+cturn
+		}
+	}else:if key&4 {
+		if cspeed<0 {
+			cdraw = 3
+		}else{
+			if frame\5 = 0{
+				cturn ^= 1
+			}
+			cdraw = 1+cturn
+		}
+	}else:if((cspeed<0)&(cdraw!=3)){
+		if frame\5 = 0{
+			cturn ^= 1
+		}
+		cdraw = 6+cturn
+	}else:if((cspeed>0)&(cdraw!=8)){
+		if frame\5 = 0{
+			cturn ^= 1
+		}
+		cdraw = 1+cturn
+	}
+
+	gmode 2,BMAG,BMAG
+	pos cx-CHARASHIFT,cy : celput CHARAID,cdraw
+
+	if((cx < ginfo(8)+double(WINDOWX)*0.4) & (ginfo(8)>0))							{ groll cx-double(WINDOWX)*0.4,ginfo(9)
+	}else : if((cx > ginfo(8)+double(WINDOWX)*0.6) & (ginfo(8)<mapyoko-WINDOWX))	: groll cx-double(WINDOWX)*0.6,ginfo(9)
+	if((cy < ginfo(9)+double(WINDOWY)*0.4) & (ginfo(9)>0))							{ groll ginfo(8),cy-double(WINDOWY)*0.4
+	}else : if((cy > ginfo(9)+double(WINDOWY)*0.6) & (ginfo(9)<maptate-WINDOWY))	: groll ginfo(8),cy-double(WINDOWY)*0.6
+
+return
+
+*tataku
+	;ジャンプ中の当たり判定
+	if(mapmain(cy/BMAG,cx/BMAG)==HATENA)	: mapmain(cy/BMAG,cx/BMAG)=NOITEM:havecoin++
+	if(mapmain(cRUy/BMAG,cRUx/BMAG)==HATENA): mapmain(cRUy/BMAG,cRUx/BMAG)=NOITEM:havecoin++
+
+	if(mapmain(cy/BMAG,cx/BMAG)==TOMEI)		: maphit(cy/BMAG,cx/BMAG)=BASIC		: mapmain(cy/BMAG,cx/BMAG)=NOITEM		: havecoin++
+	if(mapmain(cRUy/BMAG,cRUx/BMAG)==TOMEI)	: maphit(cRUy/BMAG,cRUx/BMAG)=BASIC	: mapmain(cRUy/BMAG,cRUx/BMAG)=NOITEM	: havecoin++
+
+return
+/***************************************************************************************************
+
+井長州力 //これをハッシュドタグといいます
+やあ、マイケルぅ！やあボブ！
+もうプログラム言語のすべてがわかったわ(・ω・`)?
+https://caramelos.xyz
