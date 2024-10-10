@@ -36,5 +36,5 @@
 ## 宣伝
 
 私はプログラミングと作曲をしています  
-見てね～～～
+見てね～～～  
 [YouTube](https://enoki.xyz/youtube 'YouTube')
