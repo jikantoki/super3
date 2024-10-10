@@ -1,34 +1,40 @@
-# super3  
-Welcome to jikantoki's github!  
-This is made by me when high school class. This is very like Super Maxxo Bros.  
+# Super3
+
+ときえのきの Github へようこそ!  
+高校の卒業制作で作った、スーパーマ〇〇ブラザーズのパクリゲーです
 
 ![Screen shot](./screenshot_super3.png)
 
-***  
+---
 
-## How to run  
-Download all files and run game.exe!  
+## 使い方
 
-## Language  
-This program can use Japanese only.If you want other language, remake this program yourself.  
+ダウンロードして game.exe を起動してください
 
-## License  
-* Download and run : Free  
-* Remake this program : Free  
-* Upload remake program by you : Free  
-* Recording screen when running it, and upload this movie : You must tell me the movie URL for twitter@jikantoki.  
-* For bussiness : Denied  
+## 言語
 
-## Credit  
-This program is included some files by this site. Thank you.  
-* Maou-Damashi  
-	* <https://maoudamashii.jokersounds.com/>  
-* Pocket-Sound  
-	* <https://pocket-se.info/>  
-* Musmus  
-	* <https://musmus.main.jp/>  
+全く流行っていない HSP 言語で作りました
 
-## Watch it  
-I'm able to create the program and musics.  
-If you watch it now, you're going to have a happy day.  
-[My youtube](https://enoki.xyz/youtube "My youtube")  
+## ライセンス
+
+- リメイク、改変 : OK
+- 改変したプログラムの配布 : OK
+- ゲームの配信 : 公開したら URL を送ってほしい！
+- 商用利用 : 一応禁止って事にしている
+
+## クレジット
+
+以下のフリー素材を利用しています
+
+- 魔王魂
+  - <https://maoudamashii.jokersounds.com/>
+- ポケットサウンド
+  - <https://pocket-se.info/>
+- Musmus
+  - <https://musmus.main.jp/>
+
+## 宣伝
+
+私はプログラミングと作曲をしています  
+見てね～～～
+[YouTube](https://enoki.xyz/youtube 'YouTube')
