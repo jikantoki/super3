@@ -1,10 +1,11 @@
 ;#regcmd "_hsp3cmdinit@4", "ランタイム\\ovplay.dll"
 #define debug 0;デバック用、終わったら0に戻す
 #define allinclude 0;実行ファイル内に全ての画像や音声を詰め込む場合は1にする（未実装）
-#define FIRSTSTAGE 1;最初のステージ、基本1
+#define FIRSTSTAGE 1;デバック初めから
 
 	#define GAMENAME "SUPER3"
-	#define DEVELOPER "製作者:ときえのきと愉快な仲間たち\nhttps://github.com/jikantoki\nhttps://twitter.com/jikantoki\n\nBGMと効果音は魔王魂、ポケットサウンド、Musmusのものを使用\nhttps://maoudamashii.jokersounds.com/\nhttps://pocket-se.info/\nhttps://musmus.main.jp/"
+	title GAMENAME
+	#define DEVELOPER "製作者:ときえのきと愉快な仲間たち\nhttps://github.com/jikantoki\n\nBGMと効果音は魔王魂またはポケットサウンドのものを使用\nhttps://maoudamashii.jokersounds.com/\nhttps://pocket-se.info/"
 	#packopt name "game.exe"
 
 /* 画像についての注意点
@@ -23,10 +24,14 @@ mes "ちょっと待ってね"
 #define GAZOU "画像フォルダ\\"
 #define MAGNIFICATION 3
 
-#define WINDOWX 1280
-#define WINDOWY 780
+#define WINDOWX 1296
+#define WINDOWY 768
+;************************************
+	screen 0,WINDOWX,WINDOWY,,0,0
+;************************************
 
 #define MAXSPEED 5.0
+#define UPSHIFT 8
 
 ;タイトル
 #define TITLEM_NAME "はじめから,つづきから,操作説明,製作者情報,おわる"
@@ -40,6 +45,7 @@ mes "ちょっと待ってね"
 
 #const BUTTONSIZEX TITLEM_SIZE*5 + TITLEM_BUTTON_SIZE
 #const BUTTONSIZEY TITLEM_SIZE + TITLEM_BUTTON_SIZE
+
 #const CHARASIZE 14*MAGNIFICATION
 #const CHARASHIFT 1*MAGNIFICATION
 #const BMAG 16*MAGNIFICATION
@@ -105,8 +111,6 @@ mmload "音声フォルダ\\powerup.wav",PUWAV
 mmload "音声フォルダ\\tyukan.wav",TYWAV
 #enum CCWAV
 mmload "音声フォルダ\\cancel.wav",CCWAV
-#enum OUWAV
-mmload "音声フォルダ\\one_up.wav",OUWAV
 
 #enum BGM1
 dmmload "音声フォルダ\\bgm1.ogg",BGM1
@@ -148,6 +152,8 @@ celload GAZOU+"ファイルの名前",BASIC : buffer enum名前,BMAG,BMAG : gzoom BMAG*2,
 celload GAZOU+"レンガ.png",BASIC : buffer BRICK,BMAG,BMAG : gzoom BMAG*2,BMAG*2,BASIC
 #enum HATENA
 celload GAZOU+"疑問符.png",BASIC : buffer HATENA,BMAG,BMAG : gzoom BMAG*2,BMAG*2,BASIC
+#enum CLOUD
+celload GAZOU+"雲ブロック.png",BASIC : buffer CLOUD,BMAG,BMAG : gzoom BMAG*2,BMAG*2,BASIC
 #enum TOMEI
 buffer TOMEI,BMAG,BMAG : cls 4
 #enum MAGMA
@@ -187,9 +193,9 @@ celload GAZOU+"時計.png",BASIC : buffer TIMER,32,32 : gzoom 64,64,BASIC
 celload GAZOU+"赤時計.png",BASIC : buffer REDTIMER,32,32 : gzoom 64,64,BASIC
 
 #enum BACK
-celload STAGE+"背景.png",BACK
+celload GAZOU+"地上背景.png",BACK
 #enum UPBACK
-celload STAGE+"背景上.png",UPBACK
+celload GAZOU+"地上背景上.png",UPBACK
 #enum TITLEIMAGE
 celload "画像フォルダ\\タイトル.png",TITLEIMAGE
 
@@ -205,8 +211,11 @@ titlemsecure = BUTTONSIZEY + TITLEM_SECURE
 sdim sname
 sdim name,200
 
-screen 0,WINDOWX,WINDOWY,,0,0
-
+/*
+#if debug
+	screen 1,760,180
+#endif
+*/
 
 	;onexit goto *exittt
 
@@ -215,30 +224,28 @@ screen 0,WINDOWX,WINDOWY,,0,0
 	dmmplay BGM99
 *titlestart
 	ov_setvolume 1,-2000
-	title GAMENAME
 
-snumber = FIRSTSTAGE
+snumber = 1
+#if debug
+	snumber = FIRSTSTAGE
+#endif
 extension = ".txt"
 select = "st"+snumber
 life = 5
 havecoin = 0
 interpflag = 0
 
-#if debug == 0
-
 	gsel 0
 	clrobj
 	objmode 2
 	redraw 0
-	color $FF,$FF,$FF : boxf
 	;タイトル
 	gmode 2
-	;color 153,217,234 : boxf
-	
-	color 0,0,0 : boxf
+	color 153,217,234 : boxf
+
 	repeat 2 :i=cnt
 		pos 800*i,-420 : celput UPBACK
-		pos 800*i,780-600 : celput BACK
+		pos 800*i,180 : celput BACK
 	loop
 
 	x = 832
@@ -406,7 +413,7 @@ stop
 				gsel c,-1	
 			loop
 		}
-		snumber = FIRSTSTAGE
+		snumber = 1
 		if b==0 : goto *stageselect1
 		if b==1 : goto *stageselect2
 		if b==2 : goto *stageselect3
@@ -414,53 +421,12 @@ stop
 		if b==4 : goto *stageselect5
 	}
 
-#endif
-;***************************************************************************************************
-#if debug
-	life += 94
-	
-	bgscr 1,100,160,,100,100
-		objsize 30,30
-		dim st,7
-		st(0)=1
-		chkbox "1",st(0)
-		chkbox "2",st(1)
-		chkbox "4",st(2)
-		chkbox "8",st(3)
-		pos 30,0
-		chkbox "16",st(4)
-		chkbox "32",st(5)
-		chkbox "64",st(6)
-	
-		pos 40,100
-		input select,50,20
-		ia = stat
-		objenable ia,0
-	
-		pos 55,135 : objsize 40,20 : button "適用",*start : objsel stat
-	
-		repeat
-			ib = 0
-			foreach st
-				ib += st(cnt)*powf(2,cnt)
-			loop
-			select = "st" + ib
-			objprm ia,select
-			fps_wait
-		loop
-
-#endif
-
 ;***************************************************************************************************
 *statart
 	dmmstop -1
 	mmplay OKWAV
 
 *start
-
-#if debug
-	gsel 1,-1
-#endif
 
 ;初期化
 cx = 0 : cy = 0
@@ -482,8 +448,8 @@ interpy = 0
 interpdir = 0 ;なし:0 縦:1 横:2
 poleflag = 0
 
-mapdrawx = 0
-mapdrawy = 0
+mapplacex = 0
+mapplacey = 0
 
 gosub *mapload
 if interpflag : cx = interpx : cy = interpy
@@ -514,7 +480,7 @@ switch random1
 	
 swend
 
-repeat
+repeat 10000
 	fps_wait
 	if stat>0: break
 loop
@@ -550,16 +516,35 @@ loop
 	celput COINITEM		: mes "x"+havecoin
 
 	redraw 1
-
+/*
+#if debug
+	ia = ginfo(8)
+	ib = ginfo(9)
+	gsel 1,2
+		redraw 0
+		color $FF,$FF,$FF
+		boxf
+		color 0,0,0
+		font msmincho,10
+		repeat 17 : i=cnt+ib/BMAG : ic = cnt
+			pos 0,ic*10
+			repeat 30,ia/BMAG : j=cnt
+				mes strf("%4d,",mapmain(i,j)),1
+			loop
+		loop
+		redraw 1
+	gsel 0
+#endif
+*/
 	frame += 1
 	if frame >= 60 : frame = 0 : time-=1
 	fps_wait
 
 #if debug
-	title strf("%3d  ,  %f",stat,fps_get())
+	title strf("%3d  ,  %f  ,cx=%d,cy=%d,mapplacex=%d,mapplacey=%d",stat,fps_get(),cx,cy,mapplacex,mapplacey)
 #endif
 #if debug=0
-	title strf("%s    FPS:%.2f",GAMENAME,fps_get())
+	if frame\30=0 : title strf("%s    FPS:%.2f",GAMENAME,fps_get())
 #endif
 	
 goto *main
@@ -580,14 +565,13 @@ goto *main
 		dmmstop -1
 		mmplay OKWAV
 		title GAMENAME
-		screen 0,WINDOWX,WINDOWY,,0,0
 		goto *titlestart2
 	}
 
 *charamove
 
 #if debug
-	if key&256 : cx = ginfo(8)+mousex : cy = ginfo(9)+mousey
+	if key&256 : cx = mapplacex+mousex : cy = mapplacey+mousey
 #endif
 
 	if key&128{
@@ -596,7 +580,7 @@ goto *main
 
 	;加速度設定
 	cacc = 0.1
-	cmaxspeed = 5
+	cmaxspeed = MAXSPEED
 	if key&64 : cacc += 0.05 : cmaxspeed += 4
 	
 	;左
@@ -626,19 +610,18 @@ goto *main
 	;ジャンプ
 	if(cy>0){
 		if(jumpflag==0){;ジャンプフラグなし
-			if((maphit((cLLy+1)/BMAG,(cLLx+1)/BMAG)!=AIR)||(maphit((cRLy+1)/BMAG,(cRLx-1)/BMAG)!=AIR)){;地面ついてる！
-				if(key&2)||(key&16){
-*nowj
+			if(maphit((cLLy+1)/BMAG,(cLLx+1)/BMAG)!=AIR)|(maphit((cRLy+1)/BMAG,(cRLx-1)/BMAG)!=AIR)|(mapmain((cLLy+1)/BMAG,(cLLx+1)/BMAG)==CLOUD)|(mapmain((cRLy+1)/BMAG,(cRLx-1)/BMAG)==CLOUD){;地面ついてる！
+				if(key&2)|(key&16){
 					mmplay JPWAV
 					jumpflag=1
-					cspeedy-=20+abs(cspeed)/3
+					cspeedy-=20+absf(cspeed)*0.4
 				}
 			}else{;おめーの地面ねーから
 				jumpflag=1
 				cspeedy+=1
 			}
 		}else{;ジャンプフラグあり
-			if( ( (maphit((cLLy+1)/BMAG,(cLLx+1)/BMAG)!=AIR) || (maphit((cRLy+1)/BMAG,(cRLx-1)/BMAG)!=AIR) ) && (cspeedy>=0) ){;地面ありき
+			if( ((maphit((cLLy+1)/BMAG,(cLLx+1)/BMAG)!=AIR)|(maphit((cRLy+1)/BMAG,(cRLx-1)/BMAG)!=AIR)| ((mapmain((cLLy+1)/BMAG,(cLLx-1)/BMAG)==CLOUD)&(mapmain((cLLy+BMAG-1)/BMAG,(cLLx-1)/BMAG)==CLOUD)) | ((mapmain((cRLy+1)/BMAG,(cRLx-1)/BMAG)==CLOUD)&(mapmain((cRLy+BMAG-1)/BMAG,(cRLx-1)/BMAG)==CLOUD)) ) & (cspeedy>=0) ){;地面ありき
 				jumpflag=0
 				cspeedy=0.0
 			}else{;down down Mario
@@ -661,18 +644,22 @@ goto *main
 
 	;落下判定
 	if(cy>maptate) :goto *gameover
-
 	;上配列エラー回避
 	if(cy>0){
 		;zip回避
 		if((maphit(cy/BMAG,cx/BMAG)!=AIR) & (maphit(cRUy/BMAG,cRUx/BMAG)!=AIR) & (maphit(cLLy/BMAG,cLLx/BMAG)!=AIR) & (maphit(cRLy/BMAG,cRLx/BMAG)!=AIR)) : goto *gameover
 		;上判定 独自言語解説:[{(どっちか上+飛)+(どっちも下空気)}or{どっちも上+飛}]
-		if((((maphit(cy/BMAG,cx/BMAG)!=AIR)|(maphit(cRUy/BMAG,cRUx/BMAG)!=AIR)) & (cspeedy<0) & ((maphit(cLLy/BMAG,cLLx/BMAG)==AIR)&(maphit(cRLy/BMAG,cRLx/BMAG)==AIR)))  |  (((maphit(cy/BMAG,cx/BMAG)!=AIR)&(maphit(cRUy/BMAG,cRUx/BMAG)!=AIR)) & (cspeedy<0))) or ((((mapmain(cy/BMAG,cx/BMAG)==TOMEI)|(mapmain(cRUy/BMAG,cRUx/BMAG)==TOMEI)) & (cspeedy<0) & ((maphit(cLLy/BMAG,cLLx/BMAG)==AIR)&(maphit(cRLy/BMAG,cRLx/BMAG)==AIR)))  |  (( ((mapmain(cy/BMAG,cx/BMAG)==TOMEI)|(maphit(cy/BMAG,cx/BMAG)!=AIR)) & ((maphit(cRUy/BMAG,cRUx/BMAG)==TOMEI)|(maphit(cRUy/BMAG,cRUx/BMAG)!=AIR)) ) & (cspeedy<0))){
+		if((((maphit(cy/BMAG,(cx+UPSHIFT)/BMAG)!=AIR)|(maphit(cRUy/BMAG,(cRUx-UPSHIFT)/BMAG)!=AIR)) & (cspeedy<0) & ((maphit(cLLy/BMAG,cLLx/BMAG)==AIR)&(maphit(cRLy/BMAG,cRLx/BMAG)==AIR)))  |  (((maphit(cy/BMAG,cx/BMAG)!=AIR)&(maphit(cRUy/BMAG,cRUx/BMAG)!=AIR)) & (cspeedy<0))){
 			gosub *tataku
 			cy = (cy/BMAG+1) * BMAG
 			cspeedy = 0
+		;隠しブロック処理
+		}else:if((((mapmain(cy/BMAG,(cx+UPSHIFT)/BMAG)==TOMEI)|(mapmain(cRUy/BMAG,(cRUx-UPSHIFT)/BMAG)==TOMEI)) & (cspeedy<0) & ((maphit(cLLy/BMAG,cLLx/BMAG)==AIR)&(maphit(cRLy/BMAG,cRLx/BMAG)==AIR)))  |  (( ((mapmain(cy/BMAG,cx/BMAG)==TOMEI)|(maphit(cy/BMAG,cx/BMAG)!=AIR)) & ((mapmain(cRUy/BMAG,cRUx/BMAG)==TOMEI)|(maphit(cRUy/BMAG,cRUx/BMAG)!=AIR)) ) & (cspeedy<0))){
+			gosub *tataku
+			cy = (cy/BMAG+1) * BMAG
+			cspeedy = 0			
 		;左右どっちか壁で入る。ただしどっちもは入らない 独自言語解説:[{(左どっちか)xor(右どっちか)}+{(ジャンプ中)or(左下落下めり込み上ブロック)or(右下落下めり込み上ブロック)}]
-		}else:if((((maphit(cy/BMAG,cx/BMAG)!=AIR)|(maphit(cLLy/BMAG,cLLx/BMAG)!=AIR)) ^ ((maphit(cRUy/BMAG,cRUx/BMAG)!=AIR)|(maphit(cRLy/BMAG,cRLx/BMAG)!=AIR)))&((cspeedy<=0)|(maphit((cLLy-15)/BMAG,cLLx/BMAG)!=AIR)|(maphit((cRLy-15)/BMAG,cRLx/BMAG)!=AIR))){
+		}else:if((((maphit(cy/BMAG,cx/BMAG)!=AIR)|(maphit(cLLy/BMAG,cLLx/BMAG)!=AIR)) ^ ((maphit(cRUy/BMAG,cRUx/BMAG)!=AIR)|(maphit(cRLy/BMAG,cRLx/BMAG)!=AIR)))&((cspeedy<=0)|(maphit((cLLy-cspeedy-3)/BMAG,cLLx/BMAG)!=AIR)|(maphit((cRLy-cspeedy-3)/BMAG,cRLx/BMAG)!=AIR))){
 
 			if((maphit(cy/BMAG,cx/BMAG)!=AIR) | (maphit(cLLy/BMAG,cLLx/BMAG)!=AIR)){
 				cx = (cx/BMAG+1) * BMAG
@@ -684,6 +671,11 @@ goto *main
 		;地面めり込み回避
 		}else:if(maphit(cLLy/BMAG,cLLx/BMAG)!=AIR)|(maphit(cRLy/BMAG,cRLx/BMAG)!=AIR){
 			cy = (cLLy/BMAG-1) * BMAG
+		;雲ブロック処理
+		}else:if((mapmain(cLLy/BMAG,cLLx/BMAG)==CLOUD)|(mapmain(cRLy/BMAG,cRLx/BMAG)==CLOUD)) & (cspeedy>0){
+			if((mapmain((cLLy+BMAG-cspeedy-2)/BMAG,cLLx/BMAG)==CLOUD)|(mapmain((cRLy+BMAG-cspeedy-2)/BMAG,cRLx/BMAG)==CLOUD)){
+				cy = (cLLy/BMAG-1) * BMAG
+			}
 		}
 	}
 
@@ -693,7 +685,7 @@ goto *main
 	cRLx = cx+CHARASIZE-1	: cRLy = cy+BMAG-1
 
 #if debug
-	pos cRUx,cRUy
+	pos cRUx-mapplacex,cRUy-mapplacey
 	if(cy>0){
 		if(maphit(cy/BMAG,cx/BMAG)!=AIR):	mes "左上"
 		if(maphit(cRUy/BMAG,cRUx/BMAG)!=AIR):	mes "右上"
@@ -704,10 +696,10 @@ goto *main
 	}
 
 	color 0,0,$FF
-	pset cx,cy : pset cx+1,cy : pset cx,cy+1
-	pset cRUx,cRUy : pset cRUx-1,cRUy : pset cRUx,cRUy+1
-	pset cLLx,cLLy : pset cLLx+1,cLLy : pset cLLx,cLLy-1
-	pset cRLx,cRLy : pset cRLx-1,cRLy : pset cRLx,cRLy-1
+	pset cx - mapplacex,cy - mapplacey : pset cx+1 - mapplacex,cy - mapplacey : pset cx - mapplacex,cy+1 - mapplacey
+	pset cRUx - mapplacex,cRUy - mapplacey : pset cRUx-1 - mapplacex,cRUy - mapplacey : pset cRUx - mapplacex,cRUy+1 - mapplacey
+	pset cLLx - mapplacex,cLLy - mapplacey : pset cLLx+1 - mapplacex,cLLy - mapplacey : pset cLLx - mapplacex,cLLy-1 - mapplacey
+	pset cRLx - mapplacex,cRLy - mapplacey : pset cRLx-1 - mapplacex,cRLy - mapplacey : pset cRLx - mapplacex,cRLy-1 - mapplacey
 #endif
 
 *charadraw
@@ -758,32 +750,17 @@ goto *main
 	}
 
 	gmode 2,BMAG,BMAG
-	pos cx-CHARASHIFT,cy : celput CHARAID,cdraw
-
-	if((cx < ginfo(8)+double(WINDOWX)*0.4) & (ginfo(8)>0))							{ groll cx-double(WINDOWX)*0.4,ginfo(9)
-	}else : if((cx > ginfo(8)+double(WINDOWX)*0.6) & (ginfo(8)<mapyoko-WINDOWX))	: groll cx-double(WINDOWX)*0.6,ginfo(9)
-	if((cy < ginfo(9)+double(WINDOWY)*0.4) & (ginfo(9)>0))							{ groll ginfo(8),cy-double(WINDOWY)*0.4
-	}else : if((cy > ginfo(9)+double(WINDOWY)*0.6) & (ginfo(9)<maptate-WINDOWY))	: groll ginfo(8),cy-double(WINDOWY)*0.6
+	pos cx-CHARASHIFT-mapplacex , cy-mapplacey : celput CHARAID,cdraw
 
 return
 
 ;***************************************************************************************************
-*cohantei
-	;1up判定
-	if(havecoin>=100){
-		mmplay OUWAV
-	}else{
-		mmplay COWAV
-	}
-	return
-	
-;***************************************************************************************************
 *haikei
 	;コイン判定
-	if(mapmain(cy/BMAG,cx/BMAG)==COIN):mapmain(cy/BMAG,cx/BMAG)==AIR:havecoin++:gosub *cohantei
-	if(mapmain(cRUy/BMAG,cRUx/BMAG)==COIN):mapmain(cRUy/BMAG,cRUx/BMAG)==AIR:havecoin++:gosub *cohantei
-	if(mapmain(cLLy/BMAG,cLLx/BMAG)==COIN):mapmain(cLLy/BMAG,cLLx/BMAG)==AIR:havecoin++:gosub *cohantei
-	if(mapmain(cRLy/BMAG,cRLx/BMAG)==COIN):mapmain(cRLy/BMAG,cRLx/BMAG)==AIR:havecoin++:gosub *cohantei
+	if(mapmain(cy/BMAG,cx/BMAG)==COIN):mapmain(cy/BMAG,cx/BMAG)==AIR:havecoin++:mmplay COWAV
+	if(mapmain(cRUy/BMAG,cRUx/BMAG)==COIN):mapmain(cRUy/BMAG,cRUx/BMAG)==AIR:havecoin++:mmplay COWAV
+	if(mapmain(cLLy/BMAG,cLLx/BMAG)==COIN):mapmain(cLLy/BMAG,cLLx/BMAG)==AIR:havecoin++:mmplay COWAV
+	if(mapmain(cRLy/BMAG,cRLx/BMAG)==COIN):mapmain(cRLy/BMAG,cRLx/BMAG)==AIR:havecoin++:mmplay COWAV
 
 	if(havecoin>=100) : havecoin -= 100 : life+=1
 
@@ -802,8 +779,8 @@ return
 	if(mapmain(cRLy/BMAG,cRLx/BMAG)==MAGMAB):goto *gameover
 	
 	;ジャンプブロック判定
-	if(mapmain((cLLy+1)/BMAG,cLLx/BMAG)==JUMPB):cspeedy=-65535:goto *nowj
-	if(mapmain((cRLy+1)/BMAG,cRLx/BMAG)==JUMPB):cspeedy=-65535:goto *nowj
+	if(mapmain((cLLy+1)/BMAG,cLLx/BMAG)==JUMPB):cspeedy=-65535:mmplay JPWAV
+	if(mapmain((cRLy+1)/BMAG,cRLx/BMAG)==JUMPB):cspeedy=-65535:mmplay JPWAV
 
 	;ゴール判定
 	if(mapmain(cRUy/BMAG,(cRUx-BMAG/2)/BMAG)==GOALPAUL):goto *goalok
@@ -813,11 +790,11 @@ return
 ;***************************************************************************************************
 *tataku
 	;ジャンプ中の当たり判定
-	if(mapmain(cy/BMAG,cx/BMAG)==HATENA)	: mapmain(cy/BMAG,cx/BMAG)=NOITEM:havecoin++:gosub *cohantei
-	if(mapmain(cRUy/BMAG,cRUx/BMAG)==HATENA): mapmain(cRUy/BMAG,cRUx/BMAG)=NOITEM:havecoin++:gosub *cohantei
+	if(mapmain(cy/BMAG,cx/BMAG)==HATENA)	: mapmain(cy/BMAG,cx/BMAG)=NOITEM:havecoin++:mmplay COWAV
+	if(mapmain(cRUy/BMAG,cRUx/BMAG)==HATENA): mapmain(cRUy/BMAG,cRUx/BMAG)=NOITEM:havecoin++:mmplay COWAV
 
-	if(mapmain(cy/BMAG,cx/BMAG)==TOMEI)		: maphit(cy/BMAG,cx/BMAG)=BASIC		: mapmain(cy/BMAG,cx/BMAG)=NOITEM		: havecoin++:gosub *cohantei
-	if(mapmain(cRUy/BMAG,cRUx/BMAG)==TOMEI)	: maphit(cRUy/BMAG,cRUx/BMAG)=BASIC	: mapmain(cRUy/BMAG,cRUx/BMAG)=NOITEM	: havecoin++:gosub *cohantei
+	if(mapmain(cy/BMAG,cx/BMAG)==TOMEI)		: maphit(cy/BMAG,cx/BMAG)=BASIC		: mapmain(cy/BMAG,cx/BMAG)=NOITEM		: havecoin++:mmplay COWAV
+	if(mapmain(cRUy/BMAG,cRUx/BMAG)==TOMEI)	: maphit(cRUy/BMAG,cRUx/BMAG)=BASIC	: mapmain(cRUy/BMAG,cRUx/BMAG)=NOITEM	: havecoin++:mmplay COWAV
 
 return
 ;***************************************************************************************************
@@ -854,18 +831,6 @@ return
 		if frame >= 60 : frame = 0
 		fps_wait
 	loop
-	screen 0,WINDOWX,WINDOWY,0,0,0 : cls 4
-	color $FF,$FF,$FF
-	sa = "ST-"+snumber+":結果"
-	ssize = 64
-	font msgothic,ssize
-	pos ginfo(12)/2-(strlen(sa)*(ssize/2))/2,ginfo(13)/2-ssize
-	mes sa
-	sa = "残り  x"+life+"+"+" x"+coin
-	font msgothic,BMAG
-	pos ginfo(12)/2-(strlen(sa)*(BMAG/2))/2,ginfo(13)/2
-	mes "残り",1 : celput CHARAID,0 : mes "x"+life+"+",1 : celput COIN,0 : mes "x"+havecoin
-	wait 300
 
 	snumber+=1
 	if snumber>100 : goto *gameset
@@ -874,14 +839,12 @@ return
 	;dialog "ステージ\\"+select+".txt\n"+strsize
 	if strsize = -1:goto *gameset
 	interpflag=0
-	
 
 	goto *start
 		
 ;***************************************************************************************************
 *gameset
 	await 2000
-	screen 0,WINDOWX,WINDOWY,,0,0
 	color 0,0,0
 	boxf
 	color 255,255,255
@@ -898,7 +861,6 @@ return
 	color 0,0,0
 	boxf
 	color 255,255,255
-	fsize=48
 	font msgothic,fsize,0
 	;dialog ""+(WINDOWX/2-BUTTONSIZEX/2)+"\n"+TITLEM_POS_Y
 	omedeto="プレイしてくれてありがとな"
@@ -940,29 +902,34 @@ return
 
 *mapload
 
-	screen 0,WINDOWX,WINDOWY,0,0,0 : cls 4
+	;読み込み画面
+	cls 4
 	color $FF,$FF,$FF
 	sa = "ST-"+snumber
 	ssize = 64
 	font msgothic,ssize
 	pos ginfo(12)/2-(strlen(sa)*(ssize/2))/2,ginfo(13)/2-ssize
 	mes sa
-	sa = "  x"+life
+	sa = "残り  x"+life
 	font msgothic,BMAG
 	pos ginfo(12)/2-(strlen(sa)*(BMAG/2))/2,ginfo(13)/2
-	mes "",1 : celput CHARAID,0 : mes "x"+life
-	
+	mes "残り",1 : celput CHARAID,0 : mes "x"+life
+
+	;こっから読み込み↓
 	await
 
+	;配列作成
 	dim mapmain,2048,512
 	dim maphit,2048,512
-	sdim mapindex,2048
+	sdim mapindex,2048,512
 	sdim mapin,1048576 ;2048*512
 
+	;ファイルから読み込み
 	notesel mapin
 	noteload STAGE+select+extension,1048576
 	noteunsel
 
+	;変数を分ける
 	ca = "\n"
 	split mapin,ca,mapindex
 	maphigh = stat
@@ -971,15 +938,18 @@ return
 	mapyoko = maplen*BMAG
 	maptate = maphigh*BMAG
 
+	;背景作成：時間
 	buffer BASIC,mapyoko,maptate
 	randomize
 	mhaikei = rnd(3)
 	if mhaikei==0 : color 153,217,234 : else:if mhaikei==1 : color 255,127,39 : else : color 1,1,1
 	boxf
 
+	;背景サイズ
 	backx = 800
 	backy = 600
 
+	;背景貼り付け
 	gmode 2
 	repeat :i=cnt
 		if(mapyoko<backx*cnt):break
@@ -991,20 +961,21 @@ return
 		
 		pos backx*i,maptate-backy : celput BACK
 	loop
+
+	;ブロック読み込み
 	buffer BACKWIN,maplen*16,maphigh*16 : cls 4
 	repeat maphigh : i=cnt
-		iminus=i-1
 		repeat maplen : j=cnt
 			ca = strmid(mapindex.i,j,1)
 			if(i==0){
-				caminus = "z"
+				caminus = BASIC
 			}else{
-				caminus = strmid(mapindex.iminus,j,1)
+				caminus = maphit(i-1,j)
 			}
 			pos j*16,i*16
 			mapmain(i,j)=BASIC
 			maphit(i,j)=BASIC
-			if			ca=="W"{	if(caminus=="W"){
+			if			ca=="W"{	if(caminus==BASIC){
 										picload GAZOU + "土ブロック.png",1
 									}else{
 										picload GAZOU + "草ブロック.png",1
@@ -1020,6 +991,7 @@ return
 			}else:if	ca=="メモの文字"{	mapmain(i,j) = enum名前 */
 			}else:if	ca=="b"{	mapmain(i,j) = BRICK
 			}else:if	ca=="?"{	mapmain(i,j) = HATENA
+			}else:if	ca=="~"{	mapmain(i,j) = CLOUD : maphit(i,j) = AIR
 			}else:if	ca=="_"{	mapmain(i,j) = TOMEI : maphit(i,j) = AIR
 			}else:if	ca=="M"{	mapmain(i,j) = MAGMA : maphit(i,j) = AIR
 			}else:if	ca=="m"{	mapmain(i,j) = MAGMAB : maphit(i,j) = AIR
@@ -1037,33 +1009,59 @@ return
 			}
 		loop
 	loop
-	buffer BACKWINYOBI,mapyoko,maptate
-	gzoom mapyoko,maptate,BACKWIN,0,0,maplen*16,maphigh*16
-	gsel BASIC
-	gmode 2,mapyoko,maptate 
-	pos 0,0
-	celput BACKWINYOBI
 
+	;背景と合成
+	buffer BACKWINYOBI,mapyoko,maptate;用意
+	gzoom mapyoko,maptate,BACKWIN,0,0,maplen*16,maphigh*16;拡大してブロック貼り付け
+	gsel BASIC;背景に移す
+	gmode 2,mapyoko,maptate;モードを変える 
+	pos 0,0;場所の初期化
+	celput BACKWINYOBI;貼り付け
+
+	;中間設定
 	if interpflag : mapmain(interpy/BMAG,interpx/BMAG) = INTERP
 
+	;位置指定
+	cRUx = cx+CHARASIZE-1	: cRUy = cy
+	cLLx = cx				: cLLy = cy+BMAG-1
+	cRLx = cx+CHARASIZE-1	: cRLy = cy+BMAG-1
+
+	;ここまで読み込み↑
 	await 1500
-	screen 0,mapyoko,maptate,0,0,0,WINDOWX,WINDOWY
+
+	;画面を返す
+	gsel 0
 
 return
 
+;***************************************************************************************************
 *mapdraw
 
-	mapdrawx = ginfo(8)-3*BMAG
-	if mapdrawx<0 : mapdrawx = 0
-	mapdrawy = ginfo(9)-3*BMAG
-	if mapdrawy<0 : mapdrawy = 0
-	pos mapdrawx,mapdrawy
-	gcopy BASIC,mapdrawx,mapdrawy,BMAG*32,BMAG*20
+	;画面をずらす
+	if(cx-mapplacex)<(double(WINDOWX)*0.4){
+		mapplacex -= (double(WINDOWX)*0.4) - (cx-mapplacex)
+	}else:if(cx-mapplacex)>(double(WINDOWX)*0.6){
+		mapplacex += (cx-mapplacex) - (double(WINDOWX)*0.6)
+	}
+	if(cy-mapplacey)<(double(WINDOWY)*0.4){
+		mapplacey -= (double(WINDOWY)*0.4) - (cy-mapplacey)
+	}else:if(cy-mapplacey)>(double(WINDOWY)*0.6){
+		mapplacey += (cy-mapplacey) - (double(WINDOWY)*0.6)
+	}
 
+	;上限設定
+	mapplacex = limit(mapplacex,0,mapyoko-WINDOWX)
+	mapplacey = limit(mapplacey,0,maptate-WINDOWY)
+
+	;動かないブロック+背景表示
+	gmode 0,WINDOWX,WINDOWY : pos 0,0
+	gcopy BASIC,mapplacex,mapplacey
+
+	;動きのあるブロック表示
 	gmode 2,BMAG,BMAG
-	repeat 21 : i=cnt+mapdrawy/BMAG
-		repeat 32 : j=cnt+mapdrawx/BMAG
-			pos j*BMAG,i*BMAG
+	repeat 18 : i=cnt+mapplacey/BMAG
+		repeat 28 : j=cnt+mapplacex/BMAG
+			pos j*BMAG-mapplacex,i*BMAG-mapplacey
 			if((mapmain(i,j)!=BASIC)&(mapmain(i,j)!=AIR)&(mapmain(i,j)!=CASTLE)) : celput mapmain(i,j)
 		loop
 	loop
@@ -1072,6 +1070,7 @@ return
 ;***************************************************************************************************
 *gameend
 	cls 4
+	onclick goto *gameendend
 	groll 0,0
 	wait 200
 	mmplay GOWAV
@@ -1120,7 +1119,8 @@ return
 	wait 800
 	boxf
 	mmstop
-	screen 0,WINDOWX,WINDOWY,,0,0
+*gameendend
+	onclick 0
 	goto *titlestart2
 ;***************************************************************************************************
 *owaru
